@@ -22,16 +22,6 @@
             width: 300px;
         }
 
-        .character {
-            width: 150px;
-            height: 150px;
-            margin: 20px auto;
-            background: red;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: transform 0.2s ease;
-        }
-
         button {
             padding: 10px 20px;
             background: #007bff;
@@ -50,58 +40,36 @@
 <body>
     <div class="container">
         <h1>Игра "Пощечины"</h1>
-        <div class="character" id="character"></div>
         <button id="connect-wallet">Подключить кошелек</button>
         <p id="status"></p>
     </div>
 
+    <!-- Подключение TON Connect -->
+    <script src="https://cdn.jsdelivr.net/npm/@tonconnect/ui@^2"></script>
     <script>
-        const character = document.getElementById('character');
-
-        // Обработка клика по персонажу
-        character.addEventListener('click', () => {
-            document.getElementById('status').textContent = 'Атака выполнена!';
+        // Настройка TON Connect
+        const connector = new TonConnect.UiConnector({
+            manifestUrl: 'https://p4vqq.pythonanywhere.com/manifest.json'  // Замените на URL вашего манифеста
         });
 
-        // Обработка подключения кошелька
         document.getElementById('connect-wallet').addEventListener('click', async () => {
-            // Проверяем, доступен ли Telegram.WebApp
-            if (!window.Telegram || !window.Telegram.WebApp) {
-                document.getElementById('status').textContent = 'Ошибка: приложение запущено вне Telegram.';
-                return;
-            }
-
             try {
-                const result = await window.Telegram.WebApp.requestWriteAccess();
-                if (result) {
-                    // Получаем initData после подключения кошелька
-                    const initData = window.Telegram.WebApp.initData;
-
-                    // Отправляем initData на сервер для обработки
-                    fetch("https://p4vqq.pythonanywhere.com/process_wallet", {  // Замените на URL вашего Flask-бэкенда
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({ initData }),
-                    })
-                    .then((response) => response.json())
-                    .then((data) => {
-                        document.getElementById('status').textContent = 'Кошелек успешно подключен!';
-                        console.log("Server response:", data);
-                    })
-                    .catch((error) => {
-                        document.getElementById('status').textContent = 'Ошибка: ' + error.message;
-                    });
+                if (!connector.connected) {
+                    // Подключаем кошелек
+                    await connector.connect();
+                    if (connector.connected) {
+                        const walletAddress = connector.wallet.address;
+                        document.getElementById('status').textContent = `Кошелек успешно подключен: ${walletAddress}`;
+                    } else {
+                        document.getElementById('status').textContent = 'Не удалось подключить кошелек.';
+                    }
                 } else {
-                    document.getElementById('status').textContent = 'Не удалось подключить кошелек.';
+                    document.getElementById('status').textContent = 'Кошелек уже подключен!';
                 }
             } catch (error) {
                 document.getElementById('status').textContent = 'Ошибка: ' + error.message;
             }
         });
     </script>
-</body>
-</html>
 </body>
 </html>
