@@ -1,7 +1,7 @@
 {
     "name": "My TON Game",
     "description": "A game that uses TON blockchain.",
-    "icon": "https://your-icon-url.com/icon.png",  // Замените на URL иконки
+    "icon": "https://static1.tgstat.ru/channels/_50/a8/a84f7543e8c73e7cdbfe92b053482af6.jpg",  // Замените на URL иконки
     "redirectUrls": ["https://p4vqq.github.io/durov/webapp.html"],  // URL вашего Web App
     "permissions": ["basic", "transactions"]
 }
