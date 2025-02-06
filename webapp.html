@@ -26,19 +26,14 @@
             width: 150px;
             height: 150px;
             margin: 20px auto;
-            position: relative;
-        }
-
-        .character img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+            background: red;
             border-radius: 50%;
+            cursor: pointer;
             transition: transform 0.2s ease;
         }
 
         /* Анимация удара */
-        .character img.hit {
+        .character.hit {
             animation: shake 0.3s;
         }
 
@@ -103,16 +98,14 @@
 <body>
     <div class="container">
         <h1>Игра "Пощечины"</h1>
-        <div class="character">
-            <img src="https://via.placeholder.com/150" alt="Персонаж" id="character-image">
-        </div>
+        <div class="character" id="character"></div>
         <div class="bar">
             <span id="health">100%</span>
         </div>
         <div class="bar">
             <span id="mood">100%</span>
         </div>
-        <button id="attack-button">Атаковать</button>
+        <button id="connect-wallet">Подключить кошелек</button>
         <p id="status"></p>
     </div>
 
@@ -120,9 +113,15 @@
         let health = 100;
         let mood = 100;
 
-        const characterImage = document.getElementById('character-image');
+        const character = document.getElementById('character');
 
-        document.getElementById('attack-button').addEventListener('click', () => {
+        // Обработка клика по персонажу
+        character.addEventListener('click', () => {
+            if (health <= 0 || mood <= 0) {
+                alert('Игра окончена!');
+                return;
+            }
+
             // Уменьшение шкал
             health -= 1.3;
             mood -= 1.7;
@@ -136,17 +135,31 @@
             document.querySelector('.bar:nth-child(3)::before').style.width = `${Math.max(mood, 0)}%`;
 
             // Анимация удара
-            characterImage.classList.add('hit');
+            character.classList.add('hit');
             setTimeout(() => {
-                characterImage.classList.remove('hit');
+                character.classList.remove('hit');
             }, 300);
 
             // Проверка поражения
             if (health <= 0 || mood <= 0) {
                 document.getElementById('status').textContent = 'Вы победили!';
-                document.getElementById('attack-button').disabled = true;
+                character.style.pointerEvents = 'none'; // Отключаем клики
             } else {
                 document.getElementById('status').textContent = 'Атака выполнена!';
+            }
+        });
+
+        // Обработка подключения кошелька
+        document.getElementById('connect-wallet').addEventListener('click', async () => {
+            try {
+                const result = await window.Telegram.WebApp.requestWriteAccess();
+                if (result) {
+                    document.getElementById('status').textContent = 'Кошелек успешно подключен!';
+                } else {
+                    document.getElementById('status').textContent = 'Не удалось подключить кошелек.';
+                }
+            } catch (error) {
+                document.getElementById('status').textContent = 'Ошибка: ' + error.message;
             }
         });
     </script>
