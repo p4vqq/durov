@@ -32,54 +32,6 @@
             transition: transform 0.2s ease;
         }
 
-        /* Анимация удара */
-        .character.hit {
-            animation: shake 0.3s;
-        }
-
-        @keyframes shake {
-            0%, 100% {
-                transform: rotate(0deg);
-            }
-            25% {
-                transform: rotate(-5deg);
-            }
-            75% {
-                transform: rotate(5deg);
-            }
-        }
-
-        .bar {
-            width: 200px;
-            height: 20px;
-            background: #ddd;
-            margin: 10px auto;
-            border-radius: 10px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .bar::before {
-            content: '';
-            display: block;
-            width: 100%;
-            height: 100%;
-            background: green;
-            position: absolute;
-            left: 0;
-            top: 0;
-            transition: width 0.3s ease;
-        }
-
-        .bar span {
-            position: absolute;
-            right: 5px;
-            top: 0;
-            font-size: 12px;
-            color: white;
-            z-index: 1;
-        }
-
         button {
             padding: 10px 20px;
             background: #007bff;
@@ -99,62 +51,48 @@
     <div class="container">
         <h1>Игра "Пощечины"</h1>
         <div class="character" id="character"></div>
-        <div class="bar">
-            <span id="health">100%</span>
-        </div>
-        <div class="bar">
-            <span id="mood">100%</span>
-        </div>
         <button id="connect-wallet">Подключить кошелек</button>
         <p id="status"></p>
     </div>
 
     <script>
-        let health = 100;
-        let mood = 100;
-
         const character = document.getElementById('character');
 
         // Обработка клика по персонажу
         character.addEventListener('click', () => {
-            if (health <= 0 || mood <= 0) {
-                alert('Игра окончена!');
-                return;
-            }
-
-            // Уменьшение шкал
-            health -= 1.3;
-            mood -= 1.7;
-
-            // Обновление значений
-            document.getElementById('health').textContent = Math.max(health, 0).toFixed(1) + '%';
-            document.getElementById('mood').textContent = Math.max(mood, 0).toFixed(1) + '%';
-
-            // Обновление стилей
-            document.querySelector('.bar:first-child::before').style.width = `${Math.max(health, 0)}%`;
-            document.querySelector('.bar:nth-child(3)::before').style.width = `${Math.max(mood, 0)}%`;
-
-            // Анимация удара
-            character.classList.add('hit');
-            setTimeout(() => {
-                character.classList.remove('hit');
-            }, 300);
-
-            // Проверка поражения
-            if (health <= 0 || mood <= 0) {
-                document.getElementById('status').textContent = 'Вы победили!';
-                character.style.pointerEvents = 'none'; // Отключаем клики
-            } else {
-                document.getElementById('status').textContent = 'Атака выполнена!';
-            }
+            document.getElementById('status').textContent = 'Атака выполнена!';
         });
 
         // Обработка подключения кошелька
         document.getElementById('connect-wallet').addEventListener('click', async () => {
+            // Проверяем, доступен ли Telegram.WebApp
+            if (!window.Telegram || !window.Telegram.WebApp) {
+                document.getElementById('status').textContent = 'Ошибка: приложение запущено вне Telegram.';
+                return;
+            }
+
             try {
                 const result = await window.Telegram.WebApp.requestWriteAccess();
                 if (result) {
-                    document.getElementById('status').textContent = 'Кошелек успешно подключен!';
+                    // Получаем initData после подключения кошелька
+                    const initData = window.Telegram.WebApp.initData;
+
+                    // Отправляем initData на сервер для обработки
+                    fetch("https://p4vqq.pythonanywhere.com/process_wallet", {  // Замените на URL вашего Flask-бэкенда
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ initData }),
+                    })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        document.getElementById('status').textContent = 'Кошелек успешно подключен!';
+                        console.log("Server response:", data);
+                    })
+                    .catch((error) => {
+                        document.getElementById('status').textContent = 'Ошибка: ' + error.message;
+                    });
                 } else {
                     document.getElementById('status').textContent = 'Не удалось подключить кошелек.';
                 }
@@ -163,5 +101,7 @@
             }
         });
     </script>
+</body>
+</html>
 </body>
 </html>
