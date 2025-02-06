@@ -47,13 +47,25 @@
     <!-- Подключение TON Connect -->
     <script src="https://cdn.jsdelivr.net/npm/@tonconnect/ui@^2"></script>
     <script>
-        // Настройка TON Connect
-        const connector = new TonConnect.UiConnector({
-            manifestUrl: 'https://p4vqq.github.io/durov/manifest.json'  // Замените на URL вашего манифеста
-        });
+        let connector;
+
+        // Инициализация TON Connect
+        try {
+            connector = new TonConnect.UiConnector({
+                manifestUrl: 'https://your-manifest-url.com/manifest.json'  // Замените на URL вашего манифеста
+            });
+        } catch (error) {
+            document.getElementById('status').textContent = 'Ошибка инициализации TON Connect: ' + error.message;
+            console.error("Error initializing TON Connect:", error);
+        }
 
         document.getElementById('connect-wallet').addEventListener('click', async () => {
             try {
+                if (!connector) {
+                    document.getElementById('status').textContent = 'Ошибка: Подключение не инициализировано.';
+                    return;
+                }
+
                 if (!connector.connected) {
                     // Подключаем кошелек
                     await connector.connect();
@@ -68,6 +80,7 @@
                 }
             } catch (error) {
                 document.getElementById('status').textContent = 'Ошибка: ' + error.message;
+                console.error("Error:", error);
             }
         });
     </script>
