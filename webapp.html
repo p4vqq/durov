@@ -13,15 +13,6 @@
             background-color: #f4f4f4;
         }
 
-        .container {
-            margin: 50px auto;
-            padding: 20px;
-            background: #fff;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 300px;
-        }
-
         button {
             padding: 10px 20px;
             background: #007bff;
@@ -38,18 +29,15 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Игра "Пощечины"</h1>
-        <button id="connect-wallet">Подключить кошелек</button>
-        <p id="status"></p>
-    </div>
+    <h1>Игра "Пощечины"</h1>
+    <button id="connect-wallet">Подключить кошелек</button>
+    <p id="status"></p>
 
     <!-- Подключение TON Connect -->
     <script src="https://cdn.jsdelivr.net/npm/@tonconnect/ui@^2"></script>
     <script>
         let connector;
 
-        // Инициализация TON Connect
         try {
             connector = new TonConnect.UiConnector({
                 manifestUrl: 'https://p4vqq.github.io/durov/manifest.json', // Замените на реальный URL манифеста
@@ -70,8 +58,21 @@
         document.getElementById('connect-wallet').addEventListener('click', async () => {
             try {
                 if (!connector.connected) {
-                    // Открываем диалог подключения
-                    await connector.connect();
+                    const wallets = await connector.getWallets(); // Получаем список кошельков
+
+                    // Если кошельки доступны, показываем их
+                    if (wallets.length > 0) {
+                        const walletNames = wallets.map(wallet => wallet.name).join(", ");
+                        document.getElementById('status').textContent = `Доступные кошельки: ${walletNames}`;
+
+                        // Подключаемся к выбранному кошельку
+                        await connector.connect();
+                    } else {
+                        document.getElementById('status').textContent = 'Кошельки недоступны.';
+                        return;
+                    }
+
+                    // Если кошелек подключен, показываем его адрес
                     if (connector.connected && connector.wallet) {
                         const walletAddress = connector.wallet.address;
                         document.getElementById('status').textContent = `Кошелек успешно подключен: ${walletAddress}`;
