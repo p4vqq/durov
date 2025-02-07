@@ -33,14 +33,22 @@
     <button id="connect-wallet">Подключить кошелек</button>
     <p id="status"></p>
 
-    <!-- Подключение TON Connect -->
-    <script src="https://cdn.jsdelivr.net/npm/@tonconnect/ui@^2"></script>
+    <!-- Подключение Telegram Wallet Pay API -->
+    <script src="https://cdn.jsdelivr.net/npm/@tonconnect/sdk@^2"></script>
     <script>
         let connector;
 
+        // Проверяем, доступен ли Telegram.WebApp
+        if (!window.Telegram || !window.Telegram.WebApp) {
+            document.getElementById('status').textContent = 'Ошибка: Приложение должно быть запущено через Telegram.';
+            document.getElementById('connect-wallet').disabled = true;
+            return;
+        }
+
+        // Инициализация TON Connect
         try {
             connector = new TonConnect.UiConnector({
-                manifestUrl: 'https://p4vqq.github.io/durov/manifest.json', // Замените на реальный URL манифеста
+                manifestUrl: 'https://your-manifest-url.com/manifest.json', // Замените на реальный URL манифеста
                 theme: 'auto'
             });
 
@@ -58,29 +66,40 @@
         document.getElementById('connect-wallet').addEventListener('click', async () => {
             try {
                 if (!connector.connected) {
-                    const wallets = await connector.getWallets(); // Получаем список кошельков
+                    const wallets = await connector.getWallets();
 
-                    // Если кошельки доступны, показываем их
-                    if (wallets.length > 0) {
-                        const walletNames = wallets.map(wallet => wallet.name).join(", ");
-                        document.getElementById('status').textContent = `Доступные кошельки: ${walletNames}`;
-
-                        // Подключаемся к выбранному кошельку
-                        await connector.connect();
-                    } else {
+                    if (wallets.length === 0) {
                         document.getElementById('status').textContent = 'Кошельки недоступны.';
                         return;
                     }
 
-                    // Если кошелек подключен, показываем его адрес
-                    if (connector.connected && connector.wallet) {
-                        const walletAddress = connector.wallet.address;
-                        document.getElementById('status').textContent = `Кошелек успешно подключен: ${walletAddress}`;
-                    } else {
-                        document.getElementById('status').textContent = 'Не удалось подключить кошелек.';
-                    }
+                    // Открываем диалог выбора кошелька
+                    await connector.connect();
+                }
+
+                if (connector.connected && connector.wallet) {
+                    const walletAddress = connector.wallet.address;
+                    document.getElementById('status').textContent = `Кошелек успешно подключен: ${walletAddress}`;
+
+                    // Дополнительная логика для Telegram Wallet Pay API
+                    const initData = window.Telegram.WebApp.initData;
+                    fetch("https://your-backend-url.com/process_wallet", { // Замените на URL Flask-бэкенда
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ address: walletAddress, initData }),
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log("Server response:", data);
+                    })
+                    .catch(error => {
+                        document.getElementById('status').textContent = 'Ошибка: Не удалось отправить данные на сервер.';
+                        console.error("Error sending wallet address:", error);
+                    });
                 } else {
-                    document.getElementById('status').textContent = 'Кошелек уже подключен!';
+                    document.getElementById('status').textContent = 'Не удалось подключить кошелек.';
                 }
             } catch (error) {
                 document.getElementById('status').textContent = 'Ошибка: ' + error.message;
