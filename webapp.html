@@ -52,27 +52,25 @@
         // Инициализация TON Connect
         try {
             connector = new TonConnect.UiConnector({
-                manifestUrl: 'https://p4vqq.github.io/durov/manifest.json', // Замените на реальный URL манифеста
+                manifestUrl: 'https://your-manifest-url.com/manifest.json', // Замените на реальный URL манифеста
                 theme: 'auto'
             });
 
             if (!connector) {
                 document.getElementById('status').textContent = 'Ошибка: Подключение не инициализировано.';
+                return;
             }
         } catch (error) {
             document.getElementById('status').textContent = 'Ошибка инициализации TON Connect: ' + error.message;
             console.error("Error initializing TON Connect:", error);
+            return;
         }
 
         // Обработка кнопки "Подключить кошелек"
         document.getElementById('connect-wallet').addEventListener('click', async () => {
             try {
-                if (!connector || !connector.connect) {
-                    document.getElementById('status').textContent = 'Ошибка: Подключение не инициализировано.';
-                    return;
-                }
-
                 if (!connector.connected) {
+                    // Открываем диалог подключения
                     await connector.connect();
                     if (connector.connected && connector.wallet) {
                         const walletAddress = connector.wallet.address;
